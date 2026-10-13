@@ -1,0 +1,6 @@
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY assembly/deploy/local/ /app/
+COPY docker/entrypoint.local.sh /app/docker-entrypoint.sh
+EXPOSE 9080
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]

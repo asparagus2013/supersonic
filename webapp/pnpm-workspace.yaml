@@ -1,4 +1,12 @@
-prefer-workspace-packages: true
+preferWorkspacePackages: true
 packages:
   - 'packages/*'
   - 'apps/*'
+overrides:
+  supersonic-chat-sdk: link:packages/supersonic-fe/../chat-sdk
+allowBuilds:
+  core-js: true
+  core-js-pure: true
+  es5-ext: true
+  esbuild: true
+  puppeteer-core: true

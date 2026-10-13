@@ -1,4 +1,6 @@
 target/
+/.pnpm-store/
+/docker/.env.local
 .idea/
 .vscode/
 logs/

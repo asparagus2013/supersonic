@@ -76,6 +76,26 @@ supersonic/
 └── webapp/         # Frontend React app (UmiJS 4 + Ant Design)
 ```
 
+launchers/standalone 把聊天、语义查询、认证等后端能力组合在一个 Java 进程里运行
+```
+launchers-standalone
+├── chat-server           聊天服务
+├── headless-server       语义查询服务
+├── headless-core         核心查询能力
+├── auth-authorization    授权功能
+├── auth-api              认证相关接口
+└── launchers-common      公共启动配置
+```
+
+| 根目录模块 | 主要功能 |
+|---|---|
+| `chat` | 面向用户的问答流程：助手、会话、历史记录、问题解析调度、结果展示相关处理 |
+| `headless` | 数据与语义引擎：数据源、语义模型、指标、维度、自然语言解析、SQL 转换和查询执行 |
+| `common` | 各模块共用的对象、工具、配置和基础能力，包括大模型接入 |
+| `auth` | 用户认证和权限管理 |
+| `launchers` | 启动入口、应用配置和打包配置，组合上述功能 |
+| `evaluation` | 独立评测脚本，用于检查问数效果和 SQL 执行准确率，不是日常服务模块 |
+
 ### Data Flow
 
 1. **Knowledge Base**: Extracts schema from semantic models, builds dictionary/index for schema mapping
@@ -111,3 +131,5 @@ supersonic/
 - [README.md](README.md) - English documentation
 - [README_CN.md](README_CN.md) - Chinese documentation
 - [Evaluation Guide](evaluation/README.md) - Text2SQL evaluation process
+
+

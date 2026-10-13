@@ -1,0 +1,7 @@
+**
+!assembly/
+!assembly/deploy/
+!assembly/deploy/local/
+!assembly/deploy/local/**
+!docker/
+!docker/entrypoint.local.sh

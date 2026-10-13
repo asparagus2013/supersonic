@@ -7,7 +7,8 @@ spring:
   sql:
     init:
       continue-on-error: true
-      mode: always
+#      mode: always
+      mode: never
       username: ${S2_DB_USER:root}
       password: ${S2_DB_PASSWORD:}
       schema-locations: classpath:db/schema-mysql.sql,classpath:db/schema-mysql-demo.sql

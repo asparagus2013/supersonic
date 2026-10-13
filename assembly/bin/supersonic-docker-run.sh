@@ -17,6 +17,7 @@ docker run --rm -it -d \
   -e S2_DB_TYPE=${S2_DB_TYPE} \
   -e S2_DB_HOST=${S2_DB_HOST} \
   -e S2_DB_PORT=${S2_DB_PORT} \
+
   -e S2_DB_USER=${S2_DB_USER} \
   -e S2_DB_PASSWORD=${S2_DB_PASSWORD} \
   -e S2_DB_DATABASE=${S2_DB_DATABASE} \
