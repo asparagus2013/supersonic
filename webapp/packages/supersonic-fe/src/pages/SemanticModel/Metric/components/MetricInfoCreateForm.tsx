@@ -217,7 +217,7 @@ const MetricInfoCreateForm: React.FC<CreateFormProps> = ({
     queryModelDetail();
     queryMetricsToCreateNewMetric();
     queryMetricTags();
-  }, [metricItem]);
+  }, [metricItem, modelId]);
 
   const handleSave = async () => {
     const fieldsValue = await form.validateFields();
@@ -443,11 +443,13 @@ const MetricInfoCreateForm: React.FC<CreateFormProps> = ({
     }
   };
   const queryMetricsToCreateNewMetric = async () => {
-    if (!metricItem?.id) {
+    const currentModelId = modelId || metricItem?.modelId;
+    if (!currentModelId) {
+      setCreateNewMetricList([]);
       return;
     }
     const { code, data } = await getMetricsToCreateNewMetric({
-      modelId: modelId || metricItem?.modelId,
+      modelId: currentModelId,
     });
     if (code === 200) {
       if (Array.isArray(metricItem?.metricDefineByMetricParams?.metrics)) {

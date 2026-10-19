@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Form, Button, Modal, Steps, message } from 'antd';
+import { Form, Button, Modal, Steps, Alert, message } from 'antd';
 import ModelBasicForm from './ModelBasicForm';
 import ModelFieldForm from './ModelFieldForm';
 import { formLayout } from '@/components/FormHelper/utils';
@@ -56,8 +56,13 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
   const isEdit = !!modelItem?.id;
 
   const [fields, setFields] = useState<any[]>([]);
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
   const [currentStep, setCurrentStep] = useState(0);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [columnsLoading, setColumnsLoading] = useState(false);
+  const [columnsError, setColumnsError] = useState<string>();
+  const retryColumnsRef = useRef<(() => Promise<unknown>) | null>(null);
 
   const [formDatabaseId, setFormDatabaseId] = useState<number>();
   const [queryParamsState, setQueryParamsState] = useState({});
@@ -250,6 +255,10 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
   };
 
   const handleNext = async (saveState: boolean = false) => {
+    if (columnsLoading || columnsError) {
+      message.warning('请先成功加载数据库字段后再继续');
+      return;
+    }
     const fieldsValue = await form.validateFields();
 
     const fieldsClassify = getFieldsClassify(fields);
@@ -302,7 +311,7 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
     const fieldMap = new Map(
       fieldsClassifyList.map(field => [field.fieldName, field])
     );
-    columns.forEach((item: IDataSource.IExecuteSqlColumn) => {
+    (Array.isArray(columns) ? columns : []).forEach((item: IDataSource.IExecuteSqlColumn) => {
       const { type, nameEn, comment } = item;
       const existingField = fieldMap.get(nameEn);
 
@@ -371,7 +380,8 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
         };
       }
     }
-    formatterInitData(columns, tableQueryInitValue);
+    // Preserve saved fields when live metadata cannot be loaded.
+    formatterInitData(columns || [], tableQueryInitValue);
   };
 
   const formatterInitData = (columns: any[], extendParams: Record<string, any> = {}) => {
@@ -440,22 +450,28 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
   };
 
   const queryTableColumnList = async (databaseId: number, catalog: string, dbName: string, tableName: string) => {
-    const { code, data, msg } = await getColumns(databaseId, catalog, dbName, tableName);
-    if (code === 200) {
-      const list = data || [];
-      const columns = list.map((item: any, index: number) => {
+    retryColumnsRef.current = () =>
+      queryTableColumnList(databaseId, catalog, dbName, tableName);
+    setColumnsLoading(true);
+    setColumnsError(undefined);
+    try {
+      const { code, data, msg } = await getColumns(databaseId, catalog, dbName, tableName);
+      if (code !== 200 || !Array.isArray(data)) {
+        setColumnsError(msg || '数据库字段加载失败，请检查数据库连接后重试');
+        return undefined;
+      }
+      const columns = data.map((item: any) => {
         const { dataType, columnName, comment } = item;
-        return {
-          comment,
-          nameEn: columnName,
-          type: dataType,
-        };
+        return { comment, nameEn: columnName, type: dataType };
       });
-      initFields([], columns);
+      initFields(isEdit ? fieldsRef.current : [], columns);
       setFieldColumns(columns);
       return columns;
-    } else {
-      message.error(msg);
+    } catch (error) {
+      setColumnsError('数据库字段加载失败，请检查数据库连接后重试');
+      return undefined;
+    } finally {
+      setColumnsLoading(false);
     }
   };
 
@@ -511,6 +527,7 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
 
           <Button
             type="primary"
+            disabled={columnsLoading || !!columnsError}
             loading={saveLoading}
             onClick={() => {
               handleNext(true);
@@ -539,6 +556,7 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
         {isEdit && (
           <Button
             type="primary"
+            disabled={columnsLoading || !!columnsError}
             loading={saveLoading}
             onClick={() => {
               handleNext(true);
@@ -564,6 +582,20 @@ const ModelCreateForm: React.FC<CreateFormProps> = ({
         onCancel?.();
       }}
     >
+      {columnsError && (
+        <Alert
+          type="error"
+          showIcon
+          message="无法加载数据库字段，已有模型配置已保留"
+          description={columnsError}
+          action={
+            <Button loading={columnsLoading} onClick={() => retryColumnsRef.current?.()}>
+              重试
+            </Button>
+          }
+          style={{ marginBottom: 16 }}
+        />
+      )}
       <Steps style={{ marginBottom: 28 }} size="small" current={currentStep}>
         <Step title="基本信息" />
         <Step title="字段信息" />
